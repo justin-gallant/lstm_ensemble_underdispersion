@@ -7,10 +7,13 @@ def bundle_project(output_name="project_upload.zip"):
     include_paths = [
         Path("src"),
         Path("data/processed"),
-        Path("hpc")
+        Path("hpc"),
+        Path("figures"),
+        Path("notebooks")
     ]
     include_files = [
-        "requirements.txt",
+        "preprocessing_requirements.txt",
+        "postprocessing_requirements.txt",
         "run_training.py",
         "setup.py",
         "README.md",
@@ -44,7 +47,7 @@ def bundle_project(output_name="project_upload.zip"):
                 zipf.write(f_path, f_path)
                 print(f"  + {f_path}")
 
-    print(f"\n✅ Done! {output_name} is ready for upload to Sockeye.")
+    print(f"\n✅ Done! {output_name} is ready for upload to the cluster.")
 
 if __name__ == "__main__":
     bundle_project()

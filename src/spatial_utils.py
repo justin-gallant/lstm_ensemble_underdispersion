@@ -243,12 +243,20 @@ def process_spatial_attributes(stations_list):
     # --- 7. Compute Volume Change for ENSEMBLE ---
     print("⏳ Validating Mass Balance Coverage and Calculating Volume Changes...")
     
-    # NEW: Determine which glaciers exist in our dataset using the first MB file as a reference
+    # Check if MASS_BALANCE_FILES list is empty or undefined
+    if not MASS_BALANCE_FILES:
+        print("   ⚠️ No mass balance files provided. Skipping volume change calculations.")
+        return static_df, {}
+    
+    # Determine which glaciers exist in our dataset using the first MB file as a reference
     try:
         mb_base_df = pd.read_csv(MASS_BALANCE_FILES[0], index_col=0)
         known_glaciers = set(mb_base_df.index)
     except Exception as e:
-        raise RuntimeError(f"❌ Failed to load {MASS_BALANCE_FILES[0].name} for validation: {e}")
+        # Instead of raising an error, we gracefully skip the rest of the step
+        print(f"   ⚠️ Failed to load {MASS_BALANCE_FILES[0].name} for validation: {e}")
+        print("   ⚠️ Skipping volume change calculations.")
+        return static_df, {}
 
     # Flag missing glaciers
     intersection['has_mb_data'] = intersection['RGIId'].isin(known_glaciers)

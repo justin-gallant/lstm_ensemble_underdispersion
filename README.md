@@ -1,27 +1,25 @@
-# Learning Glacier Runoff from Streamflow: A Counterfactual Evaluation of Deep Hydrological Models
+# Ranked Right, Sized Wrong: Ensemble Spread Fails Silently at Streamflow Extremes
 
 Official code repository and computational pipeline for:
-> **Learning Glacier Runoff from Streamflow: A Counterfactual Evaluation of Deep Hydrological Models**  
-> Tyler Wilson and Valentina Radić 
-> *Department of Earth, Ocean and Atmospheric Sciences, University of British Columbia*  
+> **Ranked Right, Sized Wrong: Ensemble Spread Fails Silently at Streamflow Extremes**  
+> Anonymous Authors
 > (Submitted 2026)  
-> **Correspondence:** Tyler Wilson (twilson@eoas.ubc.ca)
 
 ## Citation
 
 **APA:**
-> Wilson, T. (2026). LSTM Glacier Counterfactuals Code (Version v1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21879838
+> Anonymous Authors. (2026). LSTM Ensemble Under-dispersion Code (Version v1.0.0) [Computer software]. Zenodo. 10.5281/zenodo.22100521
 
 **BibTeX**
 ```bibtex
-@misc{wilson_lstm_counterfactual_2026_zenodo,
-  author = {Wilson, Tyler},
-  title = {LSTM Glacier Counterfactuals Code},
+@misc{anonymous_lstm_ensemble_underdispersion_2026_zenodo,
+  author = {Anonymous Authors},
+  title = {LSTM Ensemble Under-dispersion Code},
   month = aug,
   year = 2026,
   copyright = {Creative Commons Attribution 4.0 International},
   howpublished = {Zenodo},
-  doi = {https://doi.org/10.5281/zenodo.21879838}
+  doi = {10.5281/zenodo.22100521}
   }
 ```
 
@@ -29,14 +27,14 @@ Official code repository and computational pipeline for:
 
 ## Overview
 
-This repository implements a regional deep-learning framework to investigate whether glacier contributions to streamflow can be inferred directly from hydrological observations without explicit glacier physics or mass-balance training data.
+This repository implements an evaluation framework to audit the uncertainty signals produced by field-standard deep learning ensembles for streamflow forecasting, specifically assessing their reliability under increasingly frequent hydroclimatic extremes.
 
-Using a regional Long Short-Term Memory (LSTM) network trained across 269 catchments in western Canada (1980–2022), we perform a **counterfactual experiment**:
-1. **Factual Simulation ($Q_f$):** Streamflow predicted using observed meteorological forcing and actual catchment attributes (including fractional glacier cover $g$).
-2. **Counterfactual Simulation ($Q_{cf}$):** Streamflow predicted after setting fractional glacier cover to zero ($g = 0$) while holding all meteorological forcings and other topographic attributes identical.
-3. **Inferred Glacier Runoff ($Q_g$):** $Q_g = Q_f - Q_{cf}$, representing the glacier-driven streamflow component learned by the model.
+Using a 10-member random-initialization Long Short-Term Memory (LSTM) ensemble trained across 269 unregulated catchments in western Canada (1980–2022), we decouple and evaluate two distinct properties of the reported predictive uncertainty:
+* **Ensemble Spread ($\hat{\sigma}_{e}^{2}$):** The between-member variance produced by the ensemble, serving as the operational signal of epistemic uncertainty.
+* **Dispersion Sizing (Under-dispersion factor):** The ratio of realized residual error to the reported ensemble spread. This framework evaluates how this scaling behaves as flows move from ordinary conditions to unprecedented, beyond-historical-record extremes.
+* **Uncertainty Ranking (AUSE):** The Area Under the Sparsification Error, used to determine if the ensemble spread correctly orders predictions by the magnitude of their realized error. We introduce a flow-magnitude baseline ($\hat{\mu}$) to isolate genuine epistemic skill from magnitude-driven metric inflation.
 
-The code in this repository can reproduce all figures and findings in the study. All data used is publicly available. Setup instructions are given below.
+The code in this repository can reproduce all figures, tables, and reported values in the study. All data used is publicly available. Setup instructions are given below.
 
 ---
 
@@ -81,7 +79,6 @@ Before training on the cluster, it is recommended that the data be downloaded an
 
 **Files of particular note:**
 * `data/processed/combined_streamflow.csv`: this is the ground-truth streamflow data in units of $m^3/s$. Note that there will be some gaps in this data.
-* `data/processed/glacier_volume_change_x.csv`: this is the monthly changes in mass balance from the mass balance model aggregated for each station. Units are in millions of cubic meters of water (MCM). The three files are different outputs of the mass balance model. `x=1` is the best performing model. Using all three models allows for an estimate of model confidence.
 * `data/processed/static_attributes.csv`: this is the values of static variables for each station. Area is in units of $\mathrm{km}^2$, elevation is in $\mathrm{m}$, and slope is unitless.
 * `data/processed/climate/`: this folder contains CSV files of the dynamic variables, structured in the same way as `combined_streamflow.csv`. Temperature has units of degrees celcius while precipitation variables are in units of millimeters averaged over the basin.
 * `data/output` contains daily predictions for each model, structured in the same manner as `combined_streamflow` except using units of millimeters over the basin area.
@@ -92,7 +89,7 @@ Before training on the cluster, it is recommended that the data be downloaded an
 ## Repository Structure
 
 ```text
-lstm_glacier_counterfactuals/
+lstm_ensemble_underdispersion/
 ├── data/
 │   ├── output/                  # model predictions of streamflow
 │   ├── processed/               # data processed for use in model training and analysis
@@ -103,9 +100,6 @@ lstm_glacier_counterfactuals/
 │   │   │   ├── daily_temp_max.csv      # daily max temperature by basin
 │   │   │   └── daily_temp_min.csv      # daily min temperature by basin
 │   │   ├── combined_streamflow.csv     # daily observed mean streamflow per basin
-│   │   ├── glacier_volume_change_1.csv # monthly mass balance by basin for fnn file
-│   │   ├── glacier_volume_change_2.csv # monthly mass balance by basin for fnn_cluster file
-│   │   ├── glacier_volume_change_3.csv # monthly mass balance by basin for lstm file
 │   │   └── static_attributes.csv       # static attributes for each basin
 │   └── raw/                     # raw data downloads (unmodified)
 │       ├── dem_data/            # downloaded digital elevation maps
@@ -113,15 +107,11 @@ lstm_glacier_counterfactuals/
 │       ├── era5/                # temperature and precipitation data downloaded from ERA5
 │       │   ├── precipitation/   # raw hourly precipitation data
 │       │   └── temperature/     # raw hourly temperature data
-│       ├── mass_balance/        # Modeled monthly mass balance data
-│       │   ├── ts_monthly_const_area_fnn.csv
-│       │   ├── ts_monthly_const_area_fnn_cluster.csv
-│       │   └── ts_monthly_const_area_lstm.csv
 │       ├── RGI-western-canada/  # RGI glacier data and polygons
 │       ├── spatial_bounds.csv   # latitude and longitude bounds used for downloads
 │       └── station_metadata.csv # raw HYDAT station metadata
 ├── figures/                     # Manuscript figures
-├── hpc/                         # HPC (UBC Sockeye) submission & environment scripts
+├── hpc/                         # HPC submission & environment scripts
 │   ├── job.sh                   # Main SLURM execution script
 │   ├── setup_env.sh             # Conda environment setup for PyTorch/CUDA
 │   └── submit.sh                # Job submission wrapper
@@ -131,7 +121,7 @@ lstm_glacier_counterfactuals/
 │   └── setup_local.sh           # Setup script for local analysis environment
 ├── notebooks/                   # Jupyter notebooks for data processing & paper figures
 │   ├── 01_data_preprocessing.ipynb # Gauge filtering, ERA5-Land extraction, & attribute building
-│   └── 02_paper_figures.ipynb      # Main manuscript figure generation
+│   └── 02_workshop_figures.ipynb   # Main manuscript figure generation
 ├── src/                         # Core Python package
 │   ├── __init__.py
 │   ├── climate.py               # ERA5-Land climate processing routines
@@ -184,29 +174,28 @@ The `run_training.py` pipeline supports multiple architectures, loss functions, 
 
 ---
 
-## High Performance Compute Setup (UBC ARC Sockeye)
-To train the LSTM model, this project utilized UBC ARC Sockeye. The following steps can be followed to set up this project on Sockeye:
+## High Performance Compute Setup
+To train the LSTM model, this project utilizes a SLURM-based HPC cluster. The following steps can be followed to set up this project:
 
 1. **Create a Secrets File**
-   Create a file named `secrets.env` in the project root containing your email and Sockeye allocation code.
+   Create a file named `secrets.env` in the project root containing your email and allocation code.
    ```text
    # secrets.env
    EMAIL="<your email>"
    ACCOUNT="<alloc-code>-gpu"
    ```
-   Note: The -gpu suffix is required for running in a GPU environment.
+   Note: The -gpu suffix is generally required for running in a GPU environment, depending on your cluster's configuration.
 2. **Bundle the Project**
    Run the bundle script, `python bundle_project.py`, in your terminal from the project root. This creates a zip file excluding the raw data.
-3. **Upload to Sockeye**
-   Run `scp project_upload.zip <cwl>@sockeye.arc.ubc.ca:/scratch/<alloc-code>/` replacing `<cwl>` with your UBC CWL and `<alloc-code>` with your Sockeye allocation code.
-   Note that to connect to Sockeye you must be connected to a UBC secure network or connect to [UBC myVPN](https://it.ubc.ca/services/email-voice-internet/myvpn/setup-documents)
+3. **Upload to Cluster**
+   Run `scp project_upload.zip <username>@<cluster-address>:/scratch/<alloc-code>/` replacing `<username>` with your login and `<alloc-code>` with your allocation code.
 4. **Connect and Extract**
-   SSH into Sockeye and unzip the project.
+   SSH into the cluster and unzip the project.
    ```bash
-   ssh <cwl>@sockeye.arc.ubc.ca
+   ssh <username>@<cluster-address>
    cd /scratch/<alloc-code>
-   unzip project_upload.zip -d lstm_glacier_counterfactuals
-   cd lstm_glacier_counterfactuals
+   unzip project_upload.zip -d lstm_ensemble_underdispersion
+   cd lstm_ensemble_underdispersion
    ```
 5. **Setup Environment (One-time)**
    This script loads the required Python modules, creates a virtual environment, and installs dependencies.
@@ -229,21 +218,20 @@ To train the LSTM model, this project utilized UBC ARC Sockeye. The following st
    (Example: `./hpc/submit.sh topographic lstm`) 
 
 ### Monitoring and Results
-* **Check Status:** Run `squeue -u <cwl>` to see your job in the queue.
+* **Check Status:** Run `squeue -u <username>` to see your job in the queue.
 * **View Logs:** Once running, track progress live: `tail -f logs/train_*.out`
 * **Retrieve Results:**
    Once the job status has changed to `COMPLETED`, you can download the trained model and the factual/counterfactual predictions to your local machine. Saved files can be found at the following locations, with `member_id` corresponding to each of the 10 ensemble runs (0-9):
    * Trained models: `models/<exp_name>_<model_type>_member_<member_id>.pth` (*Example:* `topographic_lstm_member_0.pth`)
-   * Factual predictions: `data/output/<exp_name>_<model_type>_preds_member_<member_id>.csv` (*Example:* `topographic_lstm_preds_member_0.csv`)
-   * Counterfactual predictions: `data/output/<exp_name>_<model_type>_preds_noglacier_member_<member_id>.csv` (*Example:* `topographic_lstm_preds_noglacier_member_0.csv`)
+   * Predictions: `data/output/<exp_name>_<model_type>_preds_member_<member_id>.csv` (*Example:* `topographic_lstm_preds_member_0.csv`)
    The following code will download the necessary files:
    ```bash
-   # download the factual and counterfactual predictions
-   scp -r <cwl>@sockeye.arc.ubc.ca:/scratch/<alloc-code>/lstm_glacier_counterfactuals/data/output/* ./data/output/
+   # download the predictions
+   scp -r <username>@<cluster-address>:/scratch/<alloc-code>/lstm_ensemble_underdispersion/data/output/* ./data/output/
    ```
    ```bash
    # download saved models
-   scp -r <cwl>@sockeye.arc.ubc.ca:/scratch/<alloc-code>/lstm_glacier_counterfactuals/models/* ./models/
+   scp -r <username>@<cluster-address>:/scratch/<alloc-code>/lstm_ensemble_underdispersion/models/* ./models/
    ```
 
 ---
@@ -254,11 +242,11 @@ After retrieving the factual and counterfactual predictions from the HPC cluster
 ### Option 1: `venv` (Recommended for Windows)
 1. Create the virtual environment:
 ```bash
-python -m venv lstm-counterfactual-postprocessing-env
+python -m venv ensemble-postprocessing-env
 ```
 2. Activate the environment:
-  * PowerShell: `.\lstm-counterfactual-postprocessing-env\Scripts\Activate.ps1`
-  * Command Prompt: `.\lstm-counterfactual-postprocessing-env\Scripts\activate.bat`
+  * PowerShell: `.\ensemble-postprocessing-env\Scripts\Activate.ps1`
+  * Command Prompt: `.\ensemble-postprocessing-env\Scripts\activate.bat`
 3. Upgrade `pip` and install the required dependencies:
 ```bash
 python -m pip install --upgrade pip
@@ -267,7 +255,7 @@ pip install -r postprocessing_requirements.txt
 4. Install `ipykernel` and register the environment:
 ```bash
 pip install ipykernel
-python -m ipykernel install --user --name lstm-counterfactual-postprocessing-env --display-name "LSTM Counterfactual Postprocessing"
+python -m ipykernel install --user --name ensemble-postprocessing-env --display-name "Ensemble Postprocessing"
 ```
 5. Install the local project configuration:
 ```bash
@@ -283,7 +271,7 @@ An automated bash script is provided to handle the entire lifecycle of the envir
 ```bash
 cd local_postprocessing
 ```
-2. Make the setup script executable:
+2. Make the setup script executable (It should already be, but just in case):
 ```bash
 chmod +x setup_local.sh
 ```
@@ -294,10 +282,9 @@ chmod +x setup_local.sh
 *(Note: To completely remove the kernel and virtual environment from your system later, you can run `./clean_local.sh`)*
 
 ### Run the figure notebook
-Once the setup is complete, open `notebooks/02_paper_figures.ipynb` and select your new environment from the kernel dropdown menu. This notebook processes the downloaded prediction arrays and reproduces all figures and performance summary tables from the manuscript.
+Once the setup is complete, open `notebooks/02_workshop_figures.ipynb` and select your new environment from the kernel dropdown menu. This notebook processes the downloaded prediction arrays and reproduces all figures and performance summary tables from the manuscript.
 
 ---
 
 ## Funding & Acknowledgements
-* **Funding** This research was supported by a Canada Graduate Scholarship – Master's (CGS M) from the Natural Sciences and Engineering Research Council of Canada (NSERC) awarded to Tyler Wilson.
-* **Compute** Computational resources and systems administration were provided by Advanced Research Computing at the University of British Columbia (UBC ARC Sockeye).
+[Removed for double-blind review.]

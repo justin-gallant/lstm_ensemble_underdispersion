@@ -5,7 +5,7 @@ set -e
 
 echo "Starting Environment Setup..."
 
-# 1. Load System Modules (Sockeye-specific)
+# 1. Load System Modules
 # We purge old modules to ensure a clean slate
 module purge
 module load intel-oneapi-compilers/2023.1.0

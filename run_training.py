@@ -64,7 +64,6 @@ def main():
     # File naming scheme
     member_model_path = MODELS_DIR / f"{args.exp_name}_{args.model_type}_member_{args.member_id}.pth"
     member_pred_path = OUTPUT_DATA_DIR / f"{args.exp_name}_{args.model_type}_preds_member_{args.member_id}.csv"
-    member_cf_path = OUTPUT_DATA_DIR / f"{args.exp_name}_{args.model_type}_preds_noglacier_member_{args.member_id}.csv"
 
     # --- 4. Initialize Model ---
     if args.model_type == 'ealstm':
@@ -118,15 +117,6 @@ def main():
         exp_name=args.exp_name,
         batch_size=BATCH_SIZE, force_zero_glacier=False
     )
-
-    if 'glacier_pct' in STATIC_FEATURES:
-        print("Generating Counterfactual Predictions CSV (0% Glaciation)...")
-        predict_and_save_full_results(
-            model, DEVICE, output_file=member_cf_path,
-            dynamic_cols=DYNAMIC_FEATURES, static_cols=STATIC_FEATURES,
-            exp_name=args.exp_name,
-            batch_size=BATCH_SIZE, force_zero_glacier=True
-        )
 
     print(f"\n🎉 Member {args.member_id} Complete.")
 
