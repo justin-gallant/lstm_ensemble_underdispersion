@@ -2,18 +2,19 @@
 
 Official code repository and computational pipeline for:
 > **Ranked Right, Sized Wrong: Ensemble Spread Fails Silently at Streamflow Extremes**  
-> Anonymous Authors
-> (Submitted 2026)  
+> Justin Gallant and Tyler Wilson *Department of Earth, Ocean and Atmospheric Sciences, University of British Columbia*
+> (Submitted 2026)
+> **Correspondence:** Justin Gallant (gallant.justin.p@gmail.com)
 
 ## Citation
 
 **APA:**
-> Anonymous Authors. (2026). LSTM Ensemble Under-dispersion Code (Version v1.0.0) [Computer software]. Zenodo. 10.5281/zenodo.22100521
+> J. Gallant and T. Wilson (2026). LSTM Ensemble Under-dispersion Code (Version v1.0.0) [Computer software]. Zenodo. 10.5281/zenodo.22100521
 
 **BibTeX**
 ```bibtex
 @misc{anonymous_lstm_ensemble_underdispersion_2026_zenodo,
-  author = {Anonymous Authors},
+  author = {Gallant, Justin and Wilson, Tyler},
   title = {LSTM Ensemble Under-dispersion Code},
   month = aug,
   year = 2026,
@@ -287,4 +288,5 @@ Once the setup is complete, open `notebooks/02_workshop_figures.ipynb` and selec
 ---
 
 ## Funding & Acknowledgements
-[Removed for double-blind review.]
+* **Funding** Funding supporting this study was provided by the Natural Sciences and Engineering Research Council of Canada (NSERC) through an Undergraduate Student Research Award (USRA) to JG and a Master's Scholarship to TW.
+* **Compute** Computational resources and systems administration were provided by Advanced Research Computing at the University of British Columbia (UBC ARC Sockeye).
